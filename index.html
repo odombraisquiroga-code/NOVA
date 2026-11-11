@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NOVA - Tu asistente personal</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js" defer></script>
 </head>
 <body>
@@ -17,23 +17,34 @@
 
   <main>
     <section id="authPanel">
-      <h2>Tu cuenta NOVA</h2>
-      <form id="authForm">
-        <input id="email" type="email" placeholder="Tu correo electrónico" required>
-        <input id="password" type="password" placeholder="Tu contraseña" required>
-        <button id="signInButton" type="button">Iniciar sesión</button>
-        <button id="signUpButton" type="button">Crear cuenta</button>
-      </form>
+      <h2>Bienvenido a NOVA</h2>
+      <p>Elige cómo quieres entrar.</p>
+
+      <div class="auth-options">
+        <h3>Modo personal</h3>
+        <form id="authForm">
+          <input id="email" type="email" placeholder="Correo electrónico" required>
+          <input id="password" type="password" placeholder="Contraseña" required>
+          <button id="signInButton" type="button">Iniciar sesión</button>
+          <button id="signUpButton" type="button">Crear cuenta</button>
+        </form>
+      </div>
+
+      <div class="auth-options">
+        <h3>Modo invitado</h3>
+        <p>Usa NOVA sin registrarte. No se guardarán tus conversaciones ni recuerdos.</p>
+        <button id="guestButton" type="button">Entrar como invitado</button>
+      </div>
+
       <p id="authMessage" aria-live="polite"></p>
     </section>
 
     <section id="appPanel" hidden>
       <p id="userLabel"></p>
-      <button id="logoutButton" type="button">Cerrar sesión</button>
+      <button id="logoutButton" type="button">Salir de NOVA</button>
 
-      <h2>Chat con NOVA</h2>
       <section id="chat" aria-live="polite">
-        <div class="message bot">¡Hola! Soy NOVA. 💙</div>
+        <div class="message bot">¡Hola! Soy NOVA. 💙 ¿En qué puedo ayudarte?</div>
       </section>
 
       <form id="chatForm">
