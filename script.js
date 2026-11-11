@@ -24,6 +24,7 @@ const memoryInput = document.getElementById("memoryInput");
 const memoryList = document.getElementById("memoryList");
 
 let currentUser = null;
+let guestMode = false;
 
 function addMessage(text, type) {
   const message = document.createElement("div");
@@ -39,50 +40,66 @@ function respondNOVA(text) {
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
 
-  if (question.includes("hola")) {
-    return "¡Holaaa! ✨ ¿Qué tal estás?";
-  }
-
-  if (question.includes("como estas")) {
-    return "¡Estoy genial! Gracias por preguntar 💙";
-  }
-
-  if (question.includes("quien eres")) {
-    return "Soy NOVA, tu asistente virtual. 🌟";
-  }
-
-  if (question.includes("que haces")) {
-    return "Estoy aquí para charlar y ayudarte.";
-  }
-
-  if (question.includes("chiste")) {
-    return "¿Qué hace una abeja en el gimnasio? ¡Zum-ba! 😂";
-  }
-
-  if (question.includes("estudiar")) {
-    return "¡Vamos poco a poco! Podemos organizar tus estudios. 📚";
-  }
-
-  if (question.includes("musica")) {
-    return "¡La música puede cambiar el día! ¿Qué tipo te gusta?";
-  }
-
-  if (question.includes("videojuegos")) {
-    return "¡Los videojuegos son geniales! ¿Cuál estás jugando?";
-  }
-
-  if (question.includes("gracias")) {
-    return "¡De nada! 💙";
-  }
-
-  if (question.includes("adios")) {
-    return "¡Hasta pronto! ✨";
-  }
+  if (question.includes("hola")) return "¡Holaaa! ✨ ¿Qué tal estás?";
+  if (question.includes("como estas")) return "¡Estoy genial! Gracias por preguntar 💙";
+  if (question.includes("quien eres")) return "Soy NOVA, tu asistente virtual. 🌟";
+  if (question.includes("que haces")) return "Estoy aquí para charlar y ayudarte.";
+  if (question.includes("chiste")) return "¿Qué hace una abeja en el gimnasio? ¡Zum-ba! 😂";
+  if (question.includes("estudiar")) return "¡Vamos poco a poco! Podemos organizar tus estudios. 📚";
+  if (question.includes("musica")) return "¡La música puede cambiar el día! ¿Qué tipo te gusta?";
+  if (question.includes("videojuegos")) return "¡Los videojuegos son geniales! ¿Cuál estás jugando?";
+  if (question.includes("gracias")) return "¡De nada! 💙";
+  if (question.includes("adios")) return "¡Hasta pronto! ✨";
 
   return "Todavía estoy aprendiendo. ¡Cuéntame más! 💙";
 }
 
-// REGISTRO
+function resetChat() {
+  chat.replaceChildren();
+  addMessage("¡Hola! Soy NOVA. 💙 ¿En qué puedo ayudarte?", "bot");
+}
+
+function enterGuestMode() {
+  guestMode = true;
+  currentUser = null;
+
+  authPanel.hidden = true;
+  appPanel.hidden = false;
+
+  document.getElementById("userLabel").textContent =
+    "Modo invitado: no se guardan tus conversaciones.";
+
+  document.getElementById("memorySection").hidden = true;
+  resetChat();
+}
+
+async function enterPersonalMode(user) {
+  guestMode = false;
+  currentUser = user;
+
+  authPanel.hidden = true;
+  appPanel.hidden = false;
+
+  document.getElementById("userLabel").textContent =
+    "Modo personal: " + user.email;
+
+  document.getElementById("memorySection").hidden = false;
+  resetChat();
+  await loadMemories();
+}
+
+function showLogin() {
+  guestMode = false;
+  currentUser = null;
+
+  authPanel.hidden = false;
+  appPanel.hidden = true;
+  memoryList.replaceChildren();
+  memoryMessage.textContent = "";
+}
+
+document.getElementById("guestButton").addEventListener("click", enterGuestMode);
+
 document.getElementById("signUpButton").addEventListener("click", async () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value;
@@ -94,85 +111,53 @@ document.getElementById("signUpButton").addEventListener("click", async () => {
 
   authMessage.textContent = "Creando cuenta...";
 
-  const { data, error } = await db.auth.signUp({
-    email,
-    password
-  });
+  const { data, error } = await db.auth.signUp({ email, password });
 
   if (error) {
     authMessage.textContent = error.message;
-    return;
-  }
-
-  if (data.session) {
-    authMessage.textContent = "¡Cuenta creada!";
+  } else if (data.session) {
+    await enterPersonalMode(data.user);
   } else {
-    authMessage.textContent =
-      "Revisa tu correo para confirmar la cuenta antes de iniciar sesión.";
+    authMessage.textContent = "Revisa tu correo para confirmar tu cuenta.";
   }
 });
 
-// INICIAR SESIÓN
 document.getElementById("signInButton").addEventListener("click", async () => {
   const email = emailInput.value.trim();
   const password = passwordInput.value;
 
   authMessage.textContent = "Iniciando sesión...";
 
-  const { error } = await db.auth.signInWithPassword({
+  const { data, error } = await db.auth.signInWithPassword({
     email,
     password
   });
 
   if (error) {
     authMessage.textContent = error.message;
-  }
-});
-
-// CERRAR SESIÓN
-document.getElementById("logoutButton").addEventListener("click", async () => {
-  await db.auth.signOut();
-});
-
-// MOSTRAR APLICACIÓN
-async function showApp(user) {
-  currentUser = user;
-
-  authPanel.hidden = true;
-  appPanel.hidden = false;
-
-  document.getElementById("userLabel").textContent =
-    "Sesión iniciada: " + user.email;
-
-  await loadMemories();
-}
-
-// MOSTRAR LOGIN
-function showLogin() {
-  currentUser = null;
-  authPanel.hidden = false;
-  appPanel.hidden = true;
-  memoryList.replaceChildren();
-}
-
-// DETECTAR SESIÓN
-db.auth.onAuthStateChange((event, session) => {
-  if (session?.user) {
-    showApp(session.user);
   } else {
-    showLogin();
+    await enterPersonalMode(data.user);
   }
 });
 
-// RECUPERAR RECUERDOS
+document.getElementById("logoutButton").addEventListener("click", async () => {
+  if (guestMode) {
+    showLogin();
+    return;
+  }
+
+  await db.auth.signOut();
+  showLogin();
+});
+
 async function loadMemories() {
-  if (!currentUser) return;
+  if (!currentUser || guestMode) return;
 
   memoryMessage.textContent = "Cargando recuerdos...";
 
   const { data, error } = await db
     .from("nova_memories")
-    .select("id, content, created_at")
+    .select("id, content")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -182,7 +167,7 @@ async function loadMemories() {
 
   memoryList.replaceChildren();
 
-  data.forEach((memory) => {
+  data.forEach(memory => {
     const item = document.createElement("li");
     const content = document.createElement("span");
     const deleteButton = document.createElement("button");
@@ -207,15 +192,13 @@ async function loadMemories() {
     memoryList.appendChild(item);
   });
 
-  memoryMessage.textContent =
-    data.length + " recuerdo(s) guardado(s).";
+  memoryMessage.textContent = data.length + " recuerdo(s) guardado(s).";
 }
 
-// GUARDAR RECUERDO
-memoryForm.addEventListener("submit", async (event) => {
+memoryForm.addEventListener("submit", async event => {
   event.preventDefault();
 
-  if (!currentUser) return;
+  if (!currentUser || guestMode) return;
 
   const content = memoryInput.value.trim();
   if (!content) return;
@@ -235,8 +218,7 @@ memoryForm.addEventListener("submit", async (event) => {
   await loadMemories();
 });
 
-// CHAT
-chatForm.addEventListener("submit", (event) => {
+chatForm.addEventListener("submit", event => {
   event.preventDefault();
 
   const text = userInput.value.trim();
@@ -251,7 +233,6 @@ chatForm.addEventListener("submit", (event) => {
   userInput.value = "";
 });
 
-// RECUPERAR SESIÓN AL ABRIR
 async function initializeNOVA() {
   const { data, error } = await db.auth.getSession();
 
@@ -261,10 +242,16 @@ async function initializeNOVA() {
   }
 
   if (data.session?.user) {
-    showApp(data.session.user);
+    await enterPersonalMode(data.session.user);
   } else {
     showLogin();
   }
 }
+
+db.auth.onAuthStateChange((event, session) => {
+  if (event === "SIGNED_OUT") {
+    showLogin();
+  }
+});
 
 initializeNOVA();
