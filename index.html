@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -5,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NOVA - Tu asistente personal</title>
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
   <script src="script.js" defer></script>
 </head>
 <body>
@@ -14,16 +16,42 @@
   </header>
 
   <main>
-    <section id="chat" aria-live="polite">
-      <div class="message bot">¡Hola! Soy NOVA. ¿En qué puedo ayudarte?</div>
+    <section id="authPanel">
+      <h2>Tu cuenta NOVA</h2>
+      <form id="authForm">
+        <input id="email" type="email" placeholder="Tu correo electrónico" required>
+        <input id="password" type="password" placeholder="Tu contraseña" required>
+        <button id="signInButton" type="button">Iniciar sesión</button>
+        <button id="signUpButton" type="button">Crear cuenta</button>
+      </form>
+      <p id="authMessage" aria-live="polite"></p>
     </section>
 
-    <form id="chatForm">
-      <input id="userInput" type="text" placeholder="Escribe un mensaje..." autocomplete="off">
-      <button type="submit">Enviar</button>
-    </form>
-  </main>
+    <section id="appPanel" hidden>
+      <p id="userLabel"></p>
+      <button id="logoutButton" type="button">Cerrar sesión</button>
 
-  <script src="script.js" defer></script>
+      <h2>Chat con NOVA</h2>
+      <section id="chat" aria-live="polite">
+        <div class="message bot">¡Hola! Soy NOVA. 💙</div>
+      </section>
+
+      <form id="chatForm">
+        <input id="userInput" type="text" placeholder="Escribe un mensaje..." autocomplete="off">
+        <button type="submit">Enviar</button>
+      </form>
+
+      <section id="memorySection">
+        <h2>Mi memoria privada</h2>
+        <p>Guarda aquí cosas que quieras que NOVA recuerde.</p>
+        <form id="memoryForm">
+          <input id="memoryInput" maxlength="1000" placeholder="Quiero recordar..." required>
+          <button type="submit">Guardar recuerdo</button>
+        </form>
+        <p id="memoryMessage" aria-live="polite"></p>
+        <ul id="memoryList"></ul>
+      </section>
+    </section>
+  </main>
 </body>
 </html>
