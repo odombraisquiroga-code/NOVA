@@ -1,5 +1,12 @@
 // ==========================================
-// NOVA - CONFIGURACIÓN
+// NOVA — ASISTENTE VIRTUAL
+// ==========================================
+
+// Conexión con la base de conocimiento
+import { novaKnowledgeAnswer } from "./nova_knowledge.js";
+
+// ==========================================
+// CONFIGURACIÓN DE SUPABASE
 // ==========================================
 
 const SUPABASE_URL = "https://kxfwropbftermtlbxrxe.supabase.co";
@@ -44,7 +51,7 @@ const logoutButton = document.getElementById("logoutButton");
 
 
 // ==========================================
-// MOSTRAR Y OCULTAR PANTALLAS
+// MOSTRAR PANTALLAS
 // ==========================================
 
 function showApp() {
@@ -83,30 +90,18 @@ function addMessage(author, message) {
 
 
 // ==========================================
-// CONOCIMIENTO DE NOVA
+// RESPUESTAS DE NOVA
 // ==========================================
 
 function respondNOVA(text) {
   const question = text.toLowerCase().trim();
 
-  // Buscar en el archivo nova_knowledge.js
-  if (
-    window.NOVA_KNOWLEDGE &&
-    typeof window.NOVA_KNOWLEDGE.search === "function"
-  ) {
-    const results = window.NOVA_KNOWLEDGE.search(question);
+  // Consultar la base de conocimiento de Potato Club 2
+  const knowledge = novaKnowledgeAnswer(question);
 
-    if (results && results.length > 0) {
-      return results.map(result => {
-        return (
-          result.title +
-          " (páginas " +
-          result.pages +
-          "): " +
-          result.answer
-        );
-      }).join("\n\n");
-    }
+  // Si encuentra información, la devuelve
+  if (!knowledge.startsWith("No encuentro esa información")) {
+    return knowledge;
   }
 
   // Respuestas generales
@@ -118,27 +113,40 @@ function respondNOVA(text) {
     return "¡Hola! Soy NOVA. ¿Qué quieres saber?";
   }
 
-  if (question.includes("cómo te llamas")) {
+  if (
+    question.includes("cómo te llamas") ||
+    question.includes("como te llamas")
+  ) {
     return "Me llamo NOVA.";
   }
 
-  if (question.includes("quién eres")) {
+  if (
+    question.includes("quién eres") ||
+    question.includes("quien eres")
+  ) {
     return "Soy NOVA, una asistente virtual.";
   }
 
-  if (question.includes("qué puedes hacer")) {
-    return "Puedo responder preguntas y consultar la información que tengo guardada.";
+  if (
+    question.includes("qué puedes hacer") ||
+    question.includes("que puedes hacer")
+  ) {
+    return "Puedo responder preguntas y consultar la información que tengo guardada sobre Potato Club 2.";
   }
 
   if (question.includes("gracias")) {
     return "¡De nada!";
   }
 
-  if (question.includes("adiós") || question.includes("hasta luego")) {
+  if (
+    question.includes("adiós") ||
+    question.includes("adios") ||
+    question.includes("hasta luego")
+  ) {
     return "¡Hasta luego!";
   }
 
-  return "No he encontrado esa información en mi conocimiento actual. Prueba a preguntarlo de otra manera.";
+  return knowledge;
 }
 
 
@@ -159,8 +167,8 @@ if (signUpButton) {
     authMessage.textContent = "Creando cuenta...";
 
     const { error } = await supabaseClient.auth.signUp({
-      email: email,
-      password: password
+      email,
+      password
     });
 
     if (error) {
@@ -169,7 +177,7 @@ if (signUpButton) {
     }
 
     authMessage.textContent =
-      "Cuenta creada. Si te llega un correo de confirmación, sigue sus instrucciones.";
+      "Cuenta creada. Si recibes un correo de confirmación, sigue sus instrucciones.";
   });
 }
 
@@ -192,8 +200,8 @@ if (signInButton) {
 
     const { data, error } =
       await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: password
+        email,
+        password
       });
 
     if (error) {
@@ -256,7 +264,12 @@ async function startNOVA() {
 if (logoutButton) {
   logoutButton.addEventListener("click", async () => {
     if (!guestMode) {
-      await supabaseClient.auth.signOut();
+      const { error } = await supabaseClient.auth.signOut();
+
+      if (error) {
+        authMessage.textContent = error.message;
+        return;
+      }
     }
 
     currentUser = null;
@@ -276,7 +289,7 @@ if (logoutButton) {
 // ==========================================
 
 if (chatForm) {
-  chatForm.addEventListener("submit", async event => {
+  chatForm.addEventListener("submit", event => {
     event.preventDefault();
 
     const text = userInput.value.trim();
@@ -284,6 +297,7 @@ if (chatForm) {
     if (!text) return;
 
     addMessage("Tú", text);
+
     userInput.value = "";
 
     const answer = respondNOVA(text);
@@ -294,7 +308,7 @@ if (chatForm) {
 
 
 // ==========================================
-// GUARDAR MEMORIAS
+// GUARDAR RECUERDOS
 // ==========================================
 
 if (memoryForm) {
@@ -322,7 +336,7 @@ if (memoryForm) {
       .insert([
         {
           user_id: currentUser.id,
-          content: content
+          content
         }
       ]);
 
@@ -341,13 +355,13 @@ if (memoryForm) {
 
 
 // ==========================================
-// CARGAR MEMORIAS
+// CARGAR RECUERDOS
 // ==========================================
 
 async function loadMemories() {
   if (!currentUser || !memoryList) return;
 
-  memoryList.innerHTML = "Cargando recuerdos...";
+  memoryList.textContent = "Cargando recuerdos...";
 
   const { data, error } = await supabaseClient
     .from("nova_memories")
@@ -364,7 +378,8 @@ async function loadMemories() {
   memoryList.innerHTML = "";
 
   if (!data || data.length === 0) {
-    memoryList.textContent = "Todavía no tienes recuerdos guardados.";
+    memoryList.textContent =
+      "Todavía no tienes recuerdos guardados.";
     return;
   }
 
@@ -391,7 +406,7 @@ async function loadMemories() {
 
 
 // ==========================================
-// ELIMINAR MEMORIAS
+// ELIMINAR RECUERDOS
 // ==========================================
 
 async function deleteMemory(memoryId) {
@@ -410,16 +425,18 @@ async function deleteMemory(memoryId) {
   }
 
   memoryMessage.textContent = "Recuerdo eliminado.";
+
   await loadMemories();
 }
 
 
 // ==========================================
-// COMPROBAR SESIÓN AL ABRIR LA PÁGINA
+// COMPROBAR SESIÓN
 // ==========================================
 
 async function checkSession() {
-  const { data, error } = await supabaseClient.auth.getSession();
+  const { data, error } =
+    await supabaseClient.auth.getSession();
 
   if (error) {
     showLogin();
@@ -429,6 +446,7 @@ async function checkSession() {
   if (data.session) {
     currentUser = data.session.user;
     guestMode = false;
+
     await startNOVA();
   } else {
     showLogin();
@@ -441,7 +459,7 @@ async function checkSession() {
 // ==========================================
 
 supabaseClient.auth.onAuthStateChange(
-  async (event, session) => {
+  (event, session) => {
     if (event === "SIGNED_OUT") {
       currentUser = null;
       guestMode = false;
