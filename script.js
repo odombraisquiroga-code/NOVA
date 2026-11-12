@@ -1,5 +1,5 @@
-
-const SUPABASE_URL = "TU_API_URL";
+import { novaKnowledgeAnswer } from "./nova_knowledge.js";
+const SUPABASE_URL = "https://kxfwropbftermtlbxrxe.supabase.co/rest/v1/";
 const SUPABASE_KEY = "sb_publishable_n4heHy0vMAWmmZevlnF7yw_hrr8jzUg";
 
 let db = null;
@@ -38,10 +38,13 @@ function resetChat() {
 }
 
 function respondNOVA(text) {
+
+function respondNOVA(text) {
   const q = text.toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
+  // Respuestas básicas
   if (q.includes("hola")) return "¡Holaaa! ✨ ¿Qué tal estás?";
   if (q.includes("como estas")) return "¡Estoy genial! Gracias por preguntar 💙";
   if (q.includes("quien eres")) return "Soy NOVA, tu asistente virtual. 🌟";
@@ -54,8 +57,21 @@ function respondNOVA(text) {
   if (q.includes("gracias")) return "¡De nada! 💙";
   if (q.includes("adios")) return "¡Hasta pronto! ✨";
 
-  return "Todavía estoy aprendiendo. ¡Cuéntame más! 💙";
+  // CONSULTAR EL CONOCIMIENTO DE NOVA
+  const knowledge = novaKnowledgeAnswer(text);
+
+  if (
+    knowledge &&
+    !knowledge.startsWith("No encuentro esa información")
+  ) {
+    return knowledge;
+  }
+
+  return "Todavía no tengo información sobre eso. ¡Pero puedes enseñármelo! 💙";
 }
+  
+
+  
 
 // CONEXIÓN CON SUPABASE
 try {
