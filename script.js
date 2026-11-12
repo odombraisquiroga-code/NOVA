@@ -9,8 +9,8 @@ import { novaKnowledgeAnswer } from "./nova_knowledge.js";
 // CONFIGURACIÓN DE SUPABASE
 // ==========================================
 
-const SUPABASE_URL = "https://kxfwropbftermtlbxrxe.supabase.co";
-const SUPABASE_KEY = "PEGA_AQUI_TU_CLAVE_PUBLICABLE";
+const SUPABASE_URL = "https://kxfwropbftermtlbxrxe.supabase.co/rest/v1/";
+const SUPABASE_KEY = "sb_publishable_n4heHy0vMAWmmZevlnF7yw_hrr8jzUg";
 
 const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
