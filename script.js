@@ -1,10 +1,22 @@
-import { novaKnowledgeAnswer } from "./nova_knowledge.js";
-const SUPABASE_URL = "https://kxfwropbftermtlbxrxe.supabase.co/rest/v1/";
-const SUPABASE_KEY = "sb_publishable_n4heHy0vMAWmmZevlnF7yw_hrr8jzUg";
+// ==========================================
+// NOVA - CONFIGURACIÓN
+// ==========================================
 
-let db = null;
+const SUPABASE_URL = "https://kxfwropbftermtlbxrxe.supabase.co";
+const SUPABASE_KEY = "PEGA_AQUI_TU_CLAVE_PUBLICABLE";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
 let currentUser = null;
 let guestMode = false;
+
+
+// ==========================================
+// ELEMENTOS HTML
+// ==========================================
 
 const authPanel = document.getElementById("authPanel");
 const appPanel = document.getElementById("appPanel");
@@ -21,280 +33,393 @@ const userInput = document.getElementById("userInput");
 const memoryForm = document.getElementById("memoryForm");
 const memoryInput = document.getElementById("memoryInput");
 const memoryList = document.getElementById("memoryList");
-
 const memorySection = document.getElementById("memorySection");
 
-function addMessage(text, type) {
-  const message = document.createElement("div");
-  message.className = "message " + type;
-  message.textContent = text;
-  chat.appendChild(message);
+const guestButton = document.getElementById("guestButton");
+const userLabel = document.getElementById("userLabel");
+
+const signUpButton = document.getElementById("signUpButton");
+const signInButton = document.getElementById("signInButton");
+const logoutButton = document.getElementById("logoutButton");
+
+
+// ==========================================
+// MOSTRAR Y OCULTAR PANTALLAS
+// ==========================================
+
+function showApp() {
+  if (authPanel) authPanel.style.display = "none";
+  if (appPanel) appPanel.style.display = "block";
+}
+
+function showLogin() {
+  if (authPanel) authPanel.style.display = "block";
+  if (appPanel) appPanel.style.display = "none";
+}
+
+
+// ==========================================
+// MENSAJES DEL CHAT
+// ==========================================
+
+function addMessage(author, message) {
+  if (!chat) return;
+
+  const messageElement = document.createElement("div");
+  messageElement.className = "message";
+
+  const authorElement = document.createElement("strong");
+  authorElement.textContent = author + ": ";
+
+  const textElement = document.createElement("span");
+  textElement.textContent = message;
+
+  messageElement.appendChild(authorElement);
+  messageElement.appendChild(textElement);
+
+  chat.appendChild(messageElement);
   chat.scrollTop = chat.scrollHeight;
 }
 
-function resetChat() {
-  chat.replaceChildren();
-  addMessage("¡Hola! Soy NOVA. 💙 ¿En qué puedo ayudarte?", "bot");
-}
+
+// ==========================================
+// CONOCIMIENTO DE NOVA
+// ==========================================
 
 function respondNOVA(text) {
+  const question = text.toLowerCase().trim();
 
-function respondNOVA(text) {
-  const q = text.toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-
-  // Respuestas básicas
-  if (q.includes("hola")) return "¡Holaaa! ✨ ¿Qué tal estás?";
-  if (q.includes("como estas")) return "¡Estoy genial! Gracias por preguntar 💙";
-  if (q.includes("quien eres")) return "Soy NOVA, tu asistente virtual. 🌟";
-  if (q.includes("que haces")) return "Estoy aquí para charlar y ayudarte.";
-  if (q.includes("chiste")) return "¿Qué hace una abeja en el gimnasio? ¡Zum-ba! 😂";
-  if (q.includes("estudiar")) return "¡Vamos poco a poco! Podemos organizar tus estudios. 📚";
-  if (q.includes("musica")) return "¡La música puede cambiar el día! ¿Qué tipo te gusta?";
-  if (q.includes("videojuegos")) return "¡Los videojuegos son geniales! ¿Cuál estás jugando?";
-  if (q.includes("triste")) return "Siento que estés teniendo un día difícil. ¿Quieres contarme?";
-  if (q.includes("gracias")) return "¡De nada! 💙";
-  if (q.includes("adios")) return "¡Hasta pronto! ✨";
-
-  // CONSULTAR EL CONOCIMIENTO DE NOVA
-  const knowledge = novaKnowledgeAnswer(text);
-
+  // Buscar en el archivo nova_knowledge.js
   if (
-    knowledge &&
-    !knowledge.startsWith("No encuentro esa información")
+    window.NOVA_KNOWLEDGE &&
+    typeof window.NOVA_KNOWLEDGE.search === "function"
   ) {
-    return knowledge;
+    const results = window.NOVA_KNOWLEDGE.search(question);
+
+    if (results && results.length > 0) {
+      return results.map(result => {
+        return (
+          result.title +
+          " (páginas " +
+          result.pages +
+          "): " +
+          result.answer
+        );
+      }).join("\n\n");
+    }
   }
 
-  return "Todavía no tengo información sobre eso. ¡Pero puedes enseñármelo! 💙";
-}
-  
-
-  
-
-// CONEXIÓN CON SUPABASE
-try {
+  // Respuestas generales
   if (
-    SUPABASE_URL !== "TU_API_URL" &&
-    SUPABASE_KEY !== "TU_PUBLISHABLE_KEY" &&
-    window.supabase
+    question.includes("hola") ||
+    question.includes("buenas") ||
+    question.includes("hey")
   ) {
-    db = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_KEY
-    );
-  }
-} catch (error) {
-  console.error("Error de Supabase:", error);
-}
-
-// MODO INVITADO
-document.getElementById("guestButton").addEventListener("click", function() {
-  guestMode = true;
-  currentUser = null;
-
-  authPanel.hidden = true;
-  appPanel.hidden = false;
-  memorySection.hidden = true;
-
-  document.getElementById("userLabel").textContent =
-    "✨ Estás en modo invitado. No se guardan tus conversaciones.";
-
-  memoryList.replaceChildren();
-  resetChat();
-});
-
-// VOLVER AL INICIO
-function showLogin() {
-  guestMode = false;
-  currentUser = null;
-
-  authPanel.hidden = false;
-  appPanel.hidden = true;
-
-  memoryList.replaceChildren();
-  resetChat();
-}
-
-// MODO PERSONAL
-async function enterPersonalMode(user) {
-  guestMode = false;
-  currentUser = user;
-
-  authPanel.hidden = true;
-  appPanel.hidden = false;
-  memorySection.hidden = false;
-
-  document.getElementById("userLabel").textContent =
-    "💙 Modo personal: " + user.email;
-
-  resetChat();
-  await loadMemories();
-}
-
-// REGISTRARSE
-document.getElementById("signUpButton").addEventListener("click", async function() {
-  if (!db) {
-    authMessage.textContent = "No se pudo conectar con Supabase. Comprueba la configuración.";
-    return;
+    return "¡Hola! Soy NOVA. ¿Qué quieres saber?";
   }
 
-  const email = emailInput.value.trim();
-  const password = passwordInput.value;
-
-  if (!email || password.length < 8) {
-    authMessage.textContent = "Introduce un correo y una contraseña de al menos 8 caracteres.";
-    return;
+  if (question.includes("cómo te llamas")) {
+    return "Me llamo NOVA.";
   }
 
-  authMessage.textContent = "Creando cuenta...";
+  if (question.includes("quién eres")) {
+    return "Soy NOVA, una asistente virtual.";
+  }
 
-  const { data, error } = await db.auth.signUp({
-    email,
-    password
+  if (question.includes("qué puedes hacer")) {
+    return "Puedo responder preguntas y consultar la información que tengo guardada.";
+  }
+
+  if (question.includes("gracias")) {
+    return "¡De nada!";
+  }
+
+  if (question.includes("adiós") || question.includes("hasta luego")) {
+    return "¡Hasta luego!";
+  }
+
+  return "No he encontrado esa información en mi conocimiento actual. Prueba a preguntarlo de otra manera.";
+}
+
+
+// ==========================================
+// REGISTRO DE USUARIO
+// ==========================================
+
+if (signUpButton) {
+  signUpButton.addEventListener("click", async () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!email || !password) {
+      authMessage.textContent = "Escribe tu correo y contraseña.";
+      return;
+    }
+
+    authMessage.textContent = "Creando cuenta...";
+
+    const { error } = await supabaseClient.auth.signUp({
+      email: email,
+      password: password
+    });
+
+    if (error) {
+      authMessage.textContent = error.message;
+      return;
+    }
+
+    authMessage.textContent =
+      "Cuenta creada. Si te llega un correo de confirmación, sigue sus instrucciones.";
   });
+}
 
-  if (error) {
-    authMessage.textContent = error.message;
-  } else if (data.session) {
-    await enterPersonalMode(data.user);
-  } else {
-    authMessage.textContent = "Revisa tu correo para confirmar tu cuenta.";
-  }
-});
 
+// ==========================================
 // INICIAR SESIÓN
-document.getElementById("signInButton").addEventListener("click", async function() {
-  if (!db) {
-    authMessage.textContent = "No se pudo conectar con Supabase. Comprueba la configuración.";
-    return;
-  }
+// ==========================================
 
-  authMessage.textContent = "Iniciando sesión...";
+if (signInButton) {
+  signInButton.addEventListener("click", async () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
 
-  const { data, error } = await db.auth.signInWithPassword({
-    email: emailInput.value.trim(),
-    password: passwordInput.value
+    if (!email || !password) {
+      authMessage.textContent = "Escribe tu correo y contraseña.";
+      return;
+    }
+
+    authMessage.textContent = "Iniciando sesión...";
+
+    const { data, error } =
+      await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+    if (error) {
+      authMessage.textContent = error.message;
+      return;
+    }
+
+    currentUser = data.user;
+    guestMode = false;
+
+    await startNOVA();
   });
+}
 
-  if (error) {
-    authMessage.textContent = error.message;
-  } else {
-    await enterPersonalMode(data.user);
+
+// ==========================================
+// ENTRAR COMO INVITADO
+// ==========================================
+
+if (guestButton) {
+  guestButton.addEventListener("click", async () => {
+    currentUser = null;
+    guestMode = true;
+
+    await startNOVA();
+  });
+}
+
+
+// ==========================================
+// INICIAR NOVA
+// ==========================================
+
+async function startNOVA() {
+  showApp();
+
+  if (userLabel) {
+    userLabel.textContent = guestMode
+      ? "Modo invitado"
+      : "Sesión iniciada";
   }
-});
 
-// CERRAR SESIÓN O SALIR DE INVITADO
-document.getElementById("logoutButton").addEventListener("click", async function() {
+  if (memorySection) {
+    memorySection.style.display = guestMode ? "none" : "block";
+  }
+
   if (guestMode) {
+    addMessage("NOVA", "¡Hola! Estás usando NOVA como invitado.");
+  } else {
+    addMessage("NOVA", "¡Hola! Tu sesión está iniciada.");
+    await loadMemories();
+  }
+}
+
+
+// ==========================================
+// CERRAR SESIÓN
+// ==========================================
+
+if (logoutButton) {
+  logoutButton.addEventListener("click", async () => {
+    if (!guestMode) {
+      await supabaseClient.auth.signOut();
+    }
+
+    currentUser = null;
+    guestMode = false;
+
     showLogin();
-    return;
-  }
 
-  if (db) {
-    await db.auth.signOut();
-  }
+    if (authMessage) {
+      authMessage.textContent = "Has cerrado sesión.";
+    }
+  });
+}
 
-  showLogin();
-});
 
-// CARGAR RECUERDOS
+// ==========================================
+// CHAT
+// ==========================================
+
+if (chatForm) {
+  chatForm.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    const text = userInput.value.trim();
+
+    if (!text) return;
+
+    addMessage("Tú", text);
+    userInput.value = "";
+
+    const answer = respondNOVA(text);
+
+    addMessage("NOVA", answer);
+  });
+}
+
+
+// ==========================================
+// GUARDAR MEMORIAS
+// ==========================================
+
+if (memoryForm) {
+  memoryForm.addEventListener("submit", async event => {
+    event.preventDefault();
+
+    if (!currentUser) {
+      memoryMessage.textContent =
+        "Inicia sesión para guardar recuerdos.";
+      return;
+    }
+
+    const content = memoryInput.value.trim();
+
+    if (!content) {
+      memoryMessage.textContent =
+        "Escribe algo antes de guardarlo.";
+      return;
+    }
+
+    memoryMessage.textContent = "Guardando...";
+
+    const { error } = await supabaseClient
+      .from("nova_memories")
+      .insert([
+        {
+          user_id: currentUser.id,
+          content: content
+        }
+      ]);
+
+    if (error) {
+      memoryMessage.textContent =
+        "No se pudo guardar: " + error.message;
+      return;
+    }
+
+    memoryInput.value = "";
+    memoryMessage.textContent = "Recuerdo guardado.";
+
+    await loadMemories();
+  });
+}
+
+
+// ==========================================
+// CARGAR MEMORIAS
+// ==========================================
+
 async function loadMemories() {
-  if (!db || !currentUser || guestMode) return;
+  if (!currentUser || !memoryList) return;
 
-  memoryMessage.textContent = "Cargando recuerdos...";
+  memoryList.innerHTML = "Cargando recuerdos...";
 
-  const { data, error } = await db
+  const { data, error } = await supabaseClient
     .from("nova_memories")
-    .select("id, content")
+    .select("id, content, created_at")
+    .eq("user_id", currentUser.id)
     .order("created_at", { ascending: false });
 
   if (error) {
-    memoryMessage.textContent = "No se pudieron cargar los recuerdos.";
+    memoryList.textContent =
+      "No se pudieron cargar los recuerdos: " + error.message;
     return;
   }
 
-  memoryList.replaceChildren();
+  memoryList.innerHTML = "";
 
-  data.forEach(function(memory) {
-    const item = document.createElement("li");
-    const content = document.createElement("span");
+  if (!data || data.length === 0) {
+    memoryList.textContent = "Todavía no tienes recuerdos guardados.";
+    return;
+  }
+
+  data.forEach(memory => {
+    const memoryElement = document.createElement("div");
+    memoryElement.className = "memory-item";
+
+    const contentElement = document.createElement("span");
+    contentElement.textContent = memory.content;
+
     const deleteButton = document.createElement("button");
-
-    content.textContent = memory.content;
     deleteButton.textContent = "Eliminar";
 
-    deleteButton.addEventListener("click", async function() {
-      const { error } = await db
-        .from("nova_memories")
-        .delete()
-        .eq("id", memory.id);
-
-      if (error) {
-        memoryMessage.textContent = "No se pudo eliminar.";
-      } else {
-        await loadMemories();
-      }
+    deleteButton.addEventListener("click", async () => {
+      await deleteMemory(memory.id);
     });
 
-    item.append(content, " ", deleteButton);
-    memoryList.appendChild(item);
-  });
+    memoryElement.appendChild(contentElement);
+    memoryElement.appendChild(deleteButton);
 
-  memoryMessage.textContent = data.length + " recuerdo(s) guardado(s).";
+    memoryList.appendChild(memoryElement);
+  });
 }
 
-// GUARDAR RECUERDOS
-memoryForm.addEventListener("submit", async function(event) {
-  event.preventDefault();
 
-  if (!db || !currentUser || guestMode) return;
+// ==========================================
+// ELIMINAR MEMORIAS
+// ==========================================
 
-  const content = memoryInput.value.trim();
-  if (!content) return;
+async function deleteMemory(memoryId) {
+  if (!currentUser) return;
 
-  memoryMessage.textContent = "Guardando...";
-
-  const { error } = await db
+  const { error } = await supabaseClient
     .from("nova_memories")
-    .insert({ content });
+    .delete()
+    .eq("id", memoryId)
+    .eq("user_id", currentUser.id);
 
   if (error) {
-    memoryMessage.textContent = "No se pudo guardar el recuerdo.";
+    memoryMessage.textContent =
+      "No se pudo eliminar: " + error.message;
     return;
   }
 
-  memoryInput.value = "";
+  memoryMessage.textContent = "Recuerdo eliminado.";
   await loadMemories();
-});
+}
 
-// CHAT
-chatForm.addEventListener("submit", function(event) {
-  event.preventDefault();
 
-  const text = userInput.value.trim();
-  if (!text) return;
+// ==========================================
+// COMPROBAR SESIÓN AL ABRIR LA PÁGINA
+// ==========================================
 
-  addMessage(text, "user");
-
-  setTimeout(function() {
-    addMessage(respondNOVA(text), "bot");
-  }, 400);
-
-  userInput.value = "";
-});
-
-// RECUPERAR SESIÓN
-async function initializeNOVA() {
-  if (!db) {
-    showLogin();
-    authMessage.textContent =
-      "El modo invitado está disponible. Para usar el modo personal, revisa la conexión.";
-    return;
-  }
-
-  const { data, error } = await db.auth.getSession();
+async function checkSession() {
+  const { data, error } = await supabaseClient.auth.getSession();
 
   if (error) {
     showLogin();
@@ -302,18 +427,36 @@ async function initializeNOVA() {
   }
 
   if (data.session) {
-    await enterPersonalMode(data.session.user);
+    currentUser = data.session.user;
+    guestMode = false;
+    await startNOVA();
   } else {
     showLogin();
   }
 }
 
-if (db) {
-  db.auth.onAuthStateChange(function(event, session) {
+
+// ==========================================
+// CAMBIOS DE SESIÓN
+// ==========================================
+
+supabaseClient.auth.onAuthStateChange(
+  async (event, session) => {
     if (event === "SIGNED_OUT") {
+      currentUser = null;
+      guestMode = false;
       showLogin();
     }
-  });
-}
 
-initializeNOVA();
+    if (event === "SIGNED_IN" && session) {
+      currentUser = session.user;
+    }
+  }
+);
+
+
+// ==========================================
+// ARRANCAR NOVA
+// ==========================================
+
+checkSession();
