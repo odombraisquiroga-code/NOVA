@@ -1,68 +1,330 @@
-
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NOVA - Tu asistente personal</title>
+
+  <title>NOVA — Asistente Virtual</title>
+
+  <meta name="description" content="NOVA, tu asistente virtual personal.">
+
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script type="module" src="script.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #101323;
+      color: white;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      padding: 25px 15px;
+      background: #191f38;
+      border-bottom: 1px solid #343b5c;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 38px;
+      color: #91a8ff;
+      letter-spacing: 5px;
+    }
+
+    header p {
+      color: #bdc7e8;
+    }
+
+    main {
+      width: 90%;
+      max-width: 750px;
+      margin: 30px auto;
+    }
+
+    .panel {
+      background: #1b223c;
+      padding: 25px;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 20px #0005;
+    }
+
+    h2 {
+      color: #91a8ff;
+    }
+
+    input,
+    textarea {
+      display: block;
+      width: 100%;
+      padding: 13px;
+      margin: 10px 0;
+      border: 1px solid #465078;
+      border-radius: 8px;
+      background: #101629;
+      color: white;
+      font-size: 15px;
+    }
+
+    button {
+      padding: 12px 17px;
+      margin: 5px 3px;
+      border: none;
+      border-radius: 8px;
+      background: #667eea;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    button:hover {
+      background: #8295ff;
+    }
+
+    .secondary {
+      background: #394361;
+    }
+
+    .danger {
+      background: #a84358;
+    }
+
+    #chat {
+      height: 350px;
+      overflow-y: auto;
+      padding: 15px;
+      background: #101629;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+
+    .message {
+      padding: 10px;
+      margin: 8px 0;
+      background: #252e4c;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .message strong {
+      color: #91a8ff;
+    }
+
+    #authMessage,
+    #memoryMessage {
+      color: #b9c8ff;
+      overflow-wrap: anywhere;
+    }
+
+    .memory-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      margin: 8px 0;
+      background: #101629;
+      border-radius: 8px;
+      overflow-wrap: anywhere;
+    }
+
+    .memory-item span {
+      flex: 1;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #8994b5;
+    }
+
+    @media (max-width: 500px) {
+      main {
+        width: 94%;
+      }
+
+      .panel {
+        padding: 17px;
+      }
+
+      header h1 {
+        font-size: 30px;
+      }
+
+      .memory-item {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
 </head>
+
 <body>
+
+  <!-- CABECERA -->
+
   <header>
-    <h1>✨ NOVA</h1>
-    <p>Tu asistente personal</p>
+    <h1>NOVA</h1>
+    <p>Tu asistente virtual personal</p>
   </header>
 
+
   <main>
-    <section id="authPanel">
+
+    <!-- PANEL DE INICIO DE SESIÓN -->
+
+    <section id="authPanel" class="panel">
+
       <h2>Bienvenido a NOVA</h2>
-      <p>Elige cómo quieres entrar.</p>
 
-      <div class="auth-options">
-        <h3>Modo personal</h3>
-        <form id="authForm">
-          <input id="email" type="email" placeholder="Correo electrónico" required>
-          <input id="password" type="password" placeholder="Contraseña" required>
-          <button id="signInButton" type="button">Iniciar sesión</button>
-          <button id="signUpButton" type="button">Crear cuenta</button>
-        </form>
-      </div>
+      <p>Inicia sesión o crea una cuenta para utilizar tu espacio personal.</p>
 
-      <div class="auth-options">
-        <h3>Modo invitado</h3>
-        <p>Usa NOVA sin registrarte. No se guardarán tus conversaciones ni recuerdos.</p>
-        <button id="guestButton" type="button">Entrar como invitado</button>
-      </div>
+      <input
+        type="email"
+        id="email"
+        placeholder="Correo electrónico"
+        autocomplete="email"
+      >
+
+      <input
+        type="password"
+        id="password"
+        placeholder="Contraseña"
+        autocomplete="current-password"
+      >
+
+      <button type="button" id="signInButton">
+        Iniciar sesión
+      </button>
+
+      <button type="button" id="signUpButton">
+        Crear cuenta
+      </button>
+
+      <button type="button" id="guestButton" class="secondary">
+        Entrar como invitado
+      </button>
 
       <p id="authMessage" aria-live="polite"></p>
+
     </section>
 
-    <section id="appPanel" hidden>
-      <p id="userLabel"></p>
-      <button id="logoutButton" type="button">Salir de NOVA</button>
 
-      <section id="chat" aria-live="polite">
-        <div class="message bot">¡Hola! Soy NOVA. 💙 ¿En qué puedo ayudarte?</div>
-      </section>
+    <!-- PANEL PRINCIPAL -->
 
-      <form id="chatForm">
-        <input id="userInput" type="text" placeholder="Escribe un mensaje..." autocomplete="off">
-        <button type="submit">Enviar</button>
-      </form>
+    <section id="appPanel" style="display: none;">
 
-      <section id="memorySection">
-        <h2>Mi memoria privada</h2>
-        <p>Guarda aquí cosas que quieras que NOVA recuerde.</p>
-        <form id="memoryForm">
-          <input id="memoryInput" maxlength="1000" placeholder="Quiero recordar..." required>
-          <button type="submit">Guardar recuerdo</button>
+      <!-- CHAT -->
+
+      <div class="panel">
+
+        <h2>Chat con NOVA</h2>
+
+        <p id="userLabel"></p>
+
+        <div
+          id="chat"
+          role="log"
+          aria-live="polite"
+          aria-label="Conversación con NOVA"
+        ></div>
+
+        <form id="chatForm">
+
+          <input
+            type="text"
+            id="userInput"
+            placeholder="Escribe tu mensaje..."
+            autocomplete="off"
+            required
+          >
+
+          <button type="submit">
+            Enviar
+          </button>
+
         </form>
+
+      </div>
+
+
+      <!-- MEMORIA PERSONAL -->
+
+      <section id="memorySection" class="panel">
+
+        <h2>Memoria de NOVA</h2>
+
+        <p>
+          Guarda recuerdos y consulta los que hayas guardado en tu cuenta.
+        </p>
+
+        <form id="memoryForm">
+
+          <textarea
+            id="memoryInput"
+            rows="3"
+            placeholder="¿Qué quieres que NOVA recuerde?"
+            required
+          ></textarea>
+
+          <button type="submit">
+            Guardar recuerdo
+          </button>
+
+        </form>
+
         <p id="memoryMessage" aria-live="polite"></p>
-        <ul id="memoryList"></ul>
+
+        <h3>Tus recuerdos</h3>
+
+        <div id="memoryList">
+          Todavía no has cargado tus recuerdos.
+        </div>
+
       </section>
+
+
+      <!-- CERRAR SESIÓN -->
+
+      <div class="panel">
+
+        <button
+          type="button"
+          id="logoutButton"
+          class="danger"
+        >
+          Cerrar sesión
+        </button>
+
+      </div>
+
     </section>
+
   </main>
+
+
+  <!-- PIE DE PÁGINA -->
+
+  <footer>
+    NOVA © 2026 — Asistente virtual
+  </footer>
+
+
+  <!-- SUPABASE -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- JAVASCRIPT DE NOVA -->
+
+  <script type="module" src="script.js"></script>
+
 </body>
 </html>
